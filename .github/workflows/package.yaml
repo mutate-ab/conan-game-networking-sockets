@@ -1,0 +1,38 @@
+name: Build Package
+on: [push]
+
+jobs:
+  build-ubuntu:
+    name: Greeting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install conan
+        run: |
+          pip install conan
+          conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+      - uses: actions/checkout@v2
+      - name: install
+        run: conan install .
+      - name: source
+        run: conan source .
+      - name: build
+        run: conan build .
+      - name: package
+        run: conan package .
+  build-windows:
+    name: Greeting
+    runs-on: windows-latest
+    steps:
+      - name: Install conan
+        run: |
+          pip install conan
+          conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+      - uses: actions/checkout@v2
+      - name: install
+        run: conan install .
+      - name: source
+        run: conan source .
+      - name: build
+        run: conan build .
+      - name: package
+        run: conan package .
