@@ -3,12 +3,16 @@ on: [push]
 
 jobs:
   build-ubuntu:
-    name: Greeting
+    name: Package
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
       - name: Install conan
         run: |
-          pip install conan
+          pip3 install wheel conan
           conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
       - uses: actions/checkout@v2
       - name: install
@@ -20,12 +24,12 @@ jobs:
       - name: package
         run: conan package .
   build-windows:
-    name: Greeting
+    name: Package
     runs-on: windows-latest
     steps:
       - name: Install conan
         run: |
-          pip install conan
+          pip install wheel conan
           conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
       - uses: actions/checkout@v2
       - name: install
