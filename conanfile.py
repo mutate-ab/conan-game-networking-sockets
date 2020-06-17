@@ -4,7 +4,7 @@ import os
 
 class GameNetworkingSocketsConan(ConanFile):
     name = "GameNetworkingSockets"
-    version = "20180929"
+    version = "v1.1.0"
     description = "Reliable & unreliable messages over UDP"
     topics = ("conan", "udp", "network", "networking", "internet")
     url = "https://github.com/bincrafters/conan-GameNetworkingSockets"
@@ -21,25 +21,28 @@ class GameNetworkingSocketsConan(ConanFile):
 
     _source_subfolder = "source_subfolder"
     _build_subfolder = "build_subfolder"
-    _commit = "85dc1cd4686355e4f8229d9c23607824f6a751ac"
+    _version = "1.1.0"
+    _tag = f"v{_version}"
 
     requires = (
-        "OpenSSL/1.0.2o@conan/stable",
-        "protobuf/3.6.1@bincrafters/stable",
+        "OpenSSL/1.1.0k@conan/stable",
+        "protobuf/3.9.1@bincrafters/stable",
+        "protoc_installer/3.9.1@bincrafters/stable",
     )
-    build_requires = "cmake_installer/3.11.1@conan/stable"
+    build_requires = "cmake_installer/3.16.0@conan/stable"
 
     def source(self):
-        tools.get("https://github.com/ValveSoftware/GameNetworkingSockets/archive/{}.tar.gz".format(self._commit))
-        os.rename("GameNetworkingSockets-" + self._commit, self._source_subfolder)
+        tools.get("https://github.com/ValveSoftware/GameNetworkingSockets/archive/{}.tar.gz".format(self._tag))
+        os.rename("GameNetworkingSockets-" + self._version, self._source_subfolder)
         tools.patch(self._source_subfolder, patch_file="conan.patch")
 
     def build(self):
         with tools.environment_append({"LD_LIBRARY_PATH": self.deps_cpp_info["protobuf"].lib_paths}):
             cmake = CMake(self)
             cmake.definitions["Protobuf_USE_STATIC_LIBS"] = not self.options["protobuf"].shared
+            cmake.definitions["USE_CRYPTO25519"] = "Reference"
             cmake.configure(build_folder=self._build_subfolder)
-            cmake.build()
+            cmake.build(["--config", "Release"], None, "GameNetworkingSockets_s")
 
     def package(self):
         self.copy(pattern="LICENSE", dst="licenses", src=self._source_subfolder)

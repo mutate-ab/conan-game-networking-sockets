@@ -1,31 +1,75 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 51686b3..14f1a13 100644
+index 70c5fe9..f756e59 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1,13 +1,6 @@
- cmake_minimum_required(VERSION 3.5)
- project(GameNetworkingSockets C CXX)
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 3.5)
++cmake_minimum_required(VERSION 3.16)
  
--set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
--
+ include(CMakeDependentOption)
+ include(CMakePushCheckState)
+@@ -15,11 +15,6 @@ if(SANITIZE_ADDRESS OR SANITIZE_THREAD OR SANITIZE_MEMORY OR SANITIZE_UNDEFINED)
+ 	set(SANITIZE ON)
+ endif()
+ 
 -include(FlagsMSVC)
 -set(MSVC_RUNTIME "dynamic")
 -configure_msvc_runtime()
 -print_default_msvc_flags()
 -
- option(Protobuf_USE_STATIC_LIBS "Build with a static Protobuf library" OFF)
+ add_definitions( -DVALVE_CRYPTO_ENABLE_25519 )
+ if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+ 	add_definitions(
+@@ -86,18 +81,22 @@ endif()
  
+ if (USE_CRYPTO25519 STREQUAL "OpenSSL" OR USE_CRYPTO STREQUAL "OpenSSL")
+ 	find_package(OpenSSL REQUIRED)
+-
+ 	# Ensure the OpenSSL version is recent enough. We need a bunch of EVP
+ 	# functionality.
+ 	cmake_push_check_state()
+-	set(CMAKE_REQUIRED_LIBRARIES OpenSSL::Crypto)
+-	check_symbol_exists(EVP_MD_CTX_free openssl/evp.h OPENSSL_NEW_ENOUGH)
++	set(CMAKE_REQUIRED_INCLUDES ${OPENSSL_INCLUDE_DIR})
++	message(${CMAKE_REQUIRED_INCLUDES})
++	if(WIN32)
++		set(CMAKE_REQUIRED_LIBRARIES ${OPENSSL_CRYPTO_LIBRARIES};${OPENSSL_SSL_LIBRARIES};crypt32.lib;Ws2_32.lib)
++	else()
++		set(CMAKE_REQUIRED_LIBRARIES ${OPENSSL_CRYPTO_LIBRARIES};${OPENSSL_SSL_LIBRARIES})
++	endif()
++	message(${CMAKE_REQUIRED_LIBRARIES})
++	set(CMAKE_REQUIRED_QUIET FALSE)
++	check_symbol_exists("EVP_MD_CTX_free" "openssl/evp.h" OPENSSL_NEW_ENOUGH)
+ 	if (NOT OPENSSL_NEW_ENOUGH)
+ 		message(FATAL_ERROR "Your OpenSSL version appears to be too old. Check that you're using OpenSSL 1.1.0 or later.")
+ 	endif()
+-	cmake_pop_check_state()
+-	cmake_push_check_state()
+-	set(CMAKE_REQUIRED_LIBRARIES OpenSSL::Crypto)
+ 	if(USE_CRYPTO25519 STREQUAL "OpenSSL")
+ 		check_symbol_exists(EVP_PKEY_get_raw_public_key openssl/evp.h OPENSSL_HAS_25519_RAW)
+ 	endif()
+@@ -118,9 +117,7 @@ if(USE_CRYPTO STREQUAL "libsodium")
+ 	endif()
+ endif()
+ 
+-add_subdirectory(examples)
  add_subdirectory(src)
-diff --git a/tests/CMakeLists.txt b/tests/CMakeLists.txt
-index 3efc4be..57bef95 100644
---- a/tests/CMakeLists.txt
-+++ b/tests/CMakeLists.txt
-@@ -1,7 +1,7 @@
- add_executable(
- 	test_connection
- 	test_connection.cpp)
--target_link_libraries(test_connection GameNetworkingSockets)
-+target_link_libraries(test_connection GameNetworkingSockets ${CONAN_LIBS})
+-add_subdirectory(tests)
  
- #add_executable(
- #	test_flat
+ message(STATUS "---------------------------------------------------------")
+ message(STATUS "Crypto library for AES/SHA256: ${USE_CRYPTO}")
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index f62e2d4..353e836 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -157,8 +157,7 @@ macro(gamenetworkingsockets_common GNS_TARGET)
+ 	)
+ 
+ 	target_link_libraries(${GNS_TARGET} PUBLIC
+-		# protobuf::libprotobuf
+-		${PROTOBUF_LIBRARIES}
++		protobuf::libprotobuf
+ 		Threads::Threads
+ 	)
+ 

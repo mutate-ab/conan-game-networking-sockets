@@ -42,3 +42,13 @@ tmp/
 .pydevproject
 .settings/*
 .ropeproject/*
+
+build_subfolder/
+source_subfolder/
+package/
+test_package/
+
+conanbuildinfo.cmake
+conanbuildinfo.txt
+conaninfo.txt
+conan.lock
