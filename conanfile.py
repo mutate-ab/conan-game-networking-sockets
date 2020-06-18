@@ -4,7 +4,7 @@ import os
 
 class GameNetworkingSocketsConan(ConanFile):
     name = "GameNetworkingSockets"
-    version = "v1.1.0"
+    version = "1.1.0"
     description = "Reliable & unreliable messages over UDP"
     topics = ("conan", "udp", "network", "networking", "internet")
     url = "https://github.com/bincrafters/conan-GameNetworkingSockets"
@@ -21,8 +21,7 @@ class GameNetworkingSocketsConan(ConanFile):
 
     _source_subfolder = "source_subfolder"
     _build_subfolder = "build_subfolder"
-    _version = "1.1.0"
-    _tag = f"v{_version}"
+    _tag = f"v{version}"
 
     requires = (
         "OpenSSL/1.1.0k@conan/stable",
@@ -33,7 +32,7 @@ class GameNetworkingSocketsConan(ConanFile):
 
     def source(self):
         tools.get("https://github.com/ValveSoftware/GameNetworkingSockets/archive/{}.tar.gz".format(self._tag))
-        os.rename("GameNetworkingSockets-" + self._version, self._source_subfolder)
+        os.rename("GameNetworkingSockets-" + self.version, self._source_subfolder)
         tools.patch(self._source_subfolder, patch_file="conan.patch")
 
     def build(self):

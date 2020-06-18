@@ -1,10 +1,19 @@
 name: Build Package
 on: [push]
 
+env:
+  PROJECT_NAME: GameNetworkingSockets
+  DEST_REMOTE: http://conan.mutate.se:9300
+
 jobs:
-  build-ubuntu:
+  build-linux:
     name: Package
     runs-on: ubuntu-latest
+    container:
+      image: muscha/test-ci-linux:4
+    env:
+      CC: clang
+      CXX: clang++
     steps:
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
@@ -14,15 +23,23 @@ jobs:
         run: |
           pip3 install wheel conan
           conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+          conan remote add remote_destination ${{ env.DEST_REMOTE }}
+          conan user -r remote_destination buildbot -p ${{ secrets.BUILDBOT_PASSWORD }}
       - uses: actions/checkout@v2
       - name: install
-        run: conan install .
+        run: conan install . --build=missing
       - name: source
         run: conan source .
       - name: build
         run: conan build .
       - name: package
         run: conan package .
+      - name: publish
+        if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/stable/') }}
+        run: |
+          conan export .
+          conan export-pkg .
+          conan upload -c --all -r remote_destination ${{ env.PROJECT_NAME }}/*
   build-windows:
     name: Package
     runs-on: windows-latest
@@ -31,12 +48,20 @@ jobs:
         run: |
           pip install wheel conan
           conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+          conan remote add remote_destination ${{ env.DEST_REMOTE }}
+          conan user -r remote_destination buildbot -p ${{ secrets.BUILDBOT_PASSWORD }}
       - uses: actions/checkout@v2
       - name: install
-        run: conan install .
+        run: conan install . --build=missing
       - name: source
         run: conan source .
       - name: build
         run: conan build .
       - name: package
         run: conan package .
+      - name: publish
+        if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/stable/') }}
+        run: |
+          conan export .
+          conan export-pkg .
+          conan upload -c --all -r remote_destination ${{ env.PROJECT_NAME }}/*
