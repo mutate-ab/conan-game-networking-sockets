@@ -3,7 +3,7 @@ on: [push]
 
 env:
   PROJECT_NAME: GameNetworkingSockets
-  DEST_REMOTE: http://conan.mutate.se:9300
+  DEST_REMOTE: http://conan.mutate.se
 
 jobs:
   build-linux:
